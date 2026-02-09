@@ -16,6 +16,7 @@ wss.on("connection", (ws: WebSocket) => {
     // Handle built-in commands
     if (command === "clear") {
       ws.send(JSON.stringify({ type: "clear" }));
+      console.log(JSON.stringify({ type: "clear" }));
       return;
     }
 
