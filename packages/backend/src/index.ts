@@ -14,12 +14,12 @@ wss.on('connection', (ws: WebSocket) => {
     console.log(`Received command: ${command}`);
 
     // Handle built-in commands
-    if (command === 'clear') {
+    if ( command === 'clear') {
       ws.send(JSON.stringify({ type: 'clear' }));
       return;
     }
 
-    if (command === 'help') {
+    if ( command === 'help') {
       ws.send(JSON.stringify({ 
         type: 'output', 
         data: 'Available commands: clear, help, echo, ls, pwd, whoami echo ' 
