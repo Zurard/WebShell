@@ -4,7 +4,7 @@ export type CommandMessage = {
 };
 
 export type CommandResponse = {
-  type: 'output' | 'error' | 'clear';
+  type: "output" | "error" | "clear";
   data?: string;
   timestamp: number;
 };
