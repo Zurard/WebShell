@@ -10,7 +10,7 @@ interface TerminalLine {
 export default function Terminal() {
   const [cmd, setCmd] = useState("");
   const [history, setHistory] = useState<TerminalLine[]>([]);
-  const { messages, isConnected, sendCommand } = useWebSocket('ws://localhost:8080');
+  const { command, isConnected, sendCommand } = useWebSocket('ws://localhost:8080');
   const outputRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -25,6 +25,13 @@ export default function Terminal() {
     e.preventDefault();
     const trimmed = cmd.trim();
     if (trimmed) {
+      // Handle clear command
+      if (trimmed.toLowerCase() === "clear") {
+        setHistory([]);
+        setCmd("");
+        return;
+      }
+      
       // Add command to history
       setHistory(prev => [...prev, { type: "command", content: trimmed }]);
       sendCommand(trimmed);
@@ -34,11 +41,16 @@ export default function Terminal() {
 
   // Add incoming messages to history
   useEffect(() => {
-    if (messages.length > 0) {
-      const lastMsg = messages[messages.length - 1];
-      setHistory(prev => [...prev, { type: "output", content: lastMsg }]);
+    if (command.length > 0) {
+      const lastMsg = command[command.length - 1];
+      console.log("New command received:", lastMsg);
+      if (lastMsg.startsWith("Error: ")) {
+        setHistory(prev => [...prev, { type: "error", content: lastMsg.replace("Error: ", "") }]);
+      } else {
+        setHistory(prev => [...prev, { type: "output", content: lastMsg }]);
+      }
     }
-  }, [messages]);
+  }, [command]);
 
   return (
     <div className="h-screen w-screen bg-black text-green-400 font-mono flex flex-col overflow-hidden" style={{ fontFamily: "'Courier New', monospace" }}>
@@ -74,11 +86,11 @@ export default function Terminal() {
         {history.map((line, index) => (
           <div key={index} className="mb-0">
             {line.type === "command" ? (
-              <div className="text-green-400 text-xs leading-relaxed">
+               <div className="text-green-400 text-xs leading-relaxed">
                 <span className="text-cyan-400">shree@desktop:~$</span> <span>{line.content}</span>
               </div>
             ) : (
-              <div className="text-green-400 text-xs leading-relaxed whitespace-pre-wrap break-words">
+              <div className="text-green-400 text-xs leading-relaxed whitespace-pre-wrap wrap-break-words">
                 {line.content}
               </div>
             )}
@@ -87,7 +99,7 @@ export default function Terminal() {
 
         {/* Input form inline with output */}
         <form onSubmit={handleCommandSubmit} className="flex items-center gap-1 mt-auto">
-          <span className="text-cyan-400 flex-shrink-0 text-xs">shree@desktop:~$</span>
+          <span className="text-cyan-400 shrink-0 text-xs">WebShell./:~$</span>
           <input
             ref={inputRef}
             className="flex-1 bg-black border-0 outline-none text-green-400 text-xs"

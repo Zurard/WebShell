@@ -8,12 +8,12 @@ interface WebSocketMessage {
 }
 
 export function useWebSocket(url :string) {
-    const [messages, setMessages] = useState<string[]>([])
+    const [command, setCommand] = useState<string[]>([])
     const [isConnected ,setIsConnected] = useState<boolean>(false)
     const wsRef = useRef<WebSocket | null>(null)
 
     useEffect(( )=> {
-        // Now we need to create the web socket connection 
+        // Now we create the web socket connection 
         const ws = new WebSocket(url);
         wsRef.current = ws;
     
@@ -22,18 +22,20 @@ export function useWebSocket(url :string) {
             setIsConnected(true);
         }
         
+    //received command from the client and we need to execute it and send the output back to the client
         ws.onmessage = (event) => {
-            const message:WebSocketMessage = JSON.parse(event.data);
-            console.log("Received message:", message);
-            switch(message.type) {
+            const command :WebSocketMessage = JSON.parse(event.data);
+            console.log("Received command:", command);
+            switch(command.type) {
                 case 'clear':
-                    setMessages([]);
+                    setCommand([]);
                     break;
                 case 'output':
-                    setMessages((prev) => [...prev, message.data]);
+                    setCommand((prev) => [...prev, command.data]);
                     break;
                 case 'error':
-                    console.error("WebSocket error:", message.data);
+                    setCommand((prev) => [...prev, `Error: ${command.data}`]);
+                    // console.error("WebSocket error:", command.data);
                     break;
             }
         }
@@ -61,7 +63,7 @@ const sendCommand = (command: string) => {
     } 
 };
     return {
-        messages,
+        command,
         isConnected,
         sendCommand
     }

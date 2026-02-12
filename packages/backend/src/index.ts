@@ -9,29 +9,13 @@ console.log(`WebSocket server running on ws://localhost:${PORT}`);
 wss.on("connection", (ws: WebSocket) => {
   console.log("Client connected");
 
-  ws.on("message", (message: string) => {
-    const command = message.toString().trim();
-    console.log(`Received command: ${command}`);
+  ws.on("command", (command: string) => {
+    const cmd = command.toString().trim();
+    console.log(`Received command: ${cmd}`);
 
-    // Handle built-in commands
-    if (command === "clear") {
-      ws.send(JSON.stringify({ type: "clear" }));
-      console.log(JSON.stringify({ type: "clear" }));
-      return;
-    }
-
-    if (command === "help") {
-      ws.send(
-        JSON.stringify({
-          type: "output",
-          data: "Available commands: clear, help, echo, ls, pwd, whoami echo ",
-        }),
-      );
-      return;
-    }
 
     // Execute real Linux commands (⚠️ Be careful with security!)
-    exec(command, (error, stdout, stderr) => {
+    exec(cmd, (error, stdout, stderr) => {
       if (error) {
         ws.send(
           JSON.stringify({ type: "error", data: stderr || error.message }),
