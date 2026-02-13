@@ -9,21 +9,23 @@ console.log(`WebSocket server running on ws://localhost:${PORT}`);
 wss.on("connection", (ws: WebSocket) => {
   console.log("Client connected");
 
-  ws.on("command", (command: string) => {
+  ws.on("message", (command: string) => {
     const cmd = command.toString().trim();
     console.log(`Received command: ${cmd}`);
 
 
-    // Execute real Linux commands (⚠️ Be careful with security!)
-    exec(cmd, (error, stdout, stderr) => {
-      if (error) {
-        ws.send(
-          JSON.stringify({ type: "error", data: stderr || error.message }),
-        );
-        return;
-      }
-      ws.send(JSON.stringify({ type: "output", data: stdout }));
-    });
+    // Execute real Linux command   
+    // exec(cmd, (error, stdout, stderr) => {
+    //   if (error) {
+    //     ws.send(
+    //       JSON.stringify({ type: "error", data: stderr || error.message }),
+    //     );
+    //     return;
+    //   }
+    //   ws.send(JSON.stringify({ type: "output", data: stdout }));
+    // });
+
+     ws.send(JSON.stringify({ type: "output", data: "we are stil working on a custom terminal, stay tuned!" }));
   });
 
   ws.on("close", () => {
