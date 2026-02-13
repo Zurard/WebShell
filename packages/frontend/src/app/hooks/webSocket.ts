@@ -8,12 +8,12 @@ interface WebSocketMessage {
 }
 
 export function useWebSocket(url :string) {
-    const [command, setCommand] = useState<string[]>([])
+    const [command, setMessages] = useState<string[]>([])
     const [isConnected ,setIsConnected] = useState<boolean>(false)
     const wsRef = useRef<WebSocket | null>(null)
 
     useEffect(( )=> {
-        // Now we create the web socket connection 
+        // Now we need to create the web socket connection 
         const ws = new WebSocket(url);
         wsRef.current = ws;
     
@@ -22,26 +22,26 @@ export function useWebSocket(url :string) {
             setIsConnected(true);
         }
         
-    //received command from the client and we need to execute it and send the output back to the client
         ws.onmessage = (event) => {
-            const command :WebSocketMessage = JSON.parse(event.data);
-            console.log("Received command:", command);
-            switch(command.type) {
+            const message: WebSocketMessage = JSON.parse(event.data);
+            console.log("Received message:", message);
+            switch(message.type) {
                 case 'clear':
-                    setCommand([]);
+                    setMessages([]);
                     break;
                 case 'output':
-                    setCommand((prev) => [...prev, command.data]);
-                    break;
+                    setMessages((prev) => [...prev, message.data]);
+                    break;  
                 case 'error':
-                    setCommand((prev) => [...prev, `Error: ${command.data}`]);
-                    // console.error("WebSocket error:", command.data);
+                    // console.error("WebSocket error:", message.data);
+                    setMessages((prev) => [...prev, `Error: ${message.data}`]);
                     break;
             }
         }
 
         ws.onerror = (error) => {
-            console.error("WebSocket error", error);
+            // console.error("WebSocket error", error);
+            setMessages((prev) => [...prev, `Error: ${error}`]);
         };
 
 

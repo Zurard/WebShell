@@ -15,17 +15,15 @@ wss.on("connection", (ws: WebSocket) => {
 
 
     // Execute real Linux command   
-    // exec(cmd, (error, stdout, stderr) => {
-    //   if (error) {
-    //     ws.send(
-    //       JSON.stringify({ type: "error", data: stderr || error.message }),
-    //     );
-    //     return;
-    //   }
-    //   ws.send(JSON.stringify({ type: "output", data: stdout }));
-    // });
-
-     ws.send(JSON.stringify({ type: "output", data: "we are stil working on a custom terminal, stay tuned!" }));
+    exec(cmd, (error, stdout, stderr) => {
+      if (error) {
+        ws.send(
+          JSON.stringify({ type: "error", data: stderr || error.message }),
+        );
+        return;
+      }
+      ws.send(JSON.stringify({ type: "output", data: stdout }));
+    });
   });
 
   ws.on("close", () => {

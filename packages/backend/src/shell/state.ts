@@ -52,6 +52,10 @@ export const addDirectory = (state: ShellState, cwd: FileNode) => {
   // we need to add a directory to the file system tree
   const currNode = findNodeByPath(state.root, cwd.name);
   if (currNode && currNode.type === "directory") {
+    // first we need to check if the file aready exists or not so we dont create duplicate files or directories
+    if (currNode.children && currNode.children.some(child => child.name === `dir${currNode.children!.length}`)) {
+      return "dir already exists"; // directory already exists, do not create a duplicate
+    }
     const newDir: FileNode = {
       id: `${currNode.id}-${currNode.children ? currNode.children.length : 0}`,
       name: `dir${currNode.children ? currNode.children.length : 0}`,
