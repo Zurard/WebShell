@@ -17,4 +17,3 @@ export const parseCommand = (command: string) => {
     parsedCommand,
   };
 };
-

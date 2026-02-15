@@ -1,6 +1,6 @@
 // we need a tree like structure for mimicking a file system and we need to store the current working directory and the command history
 
-interface FileNode {
+export interface FileNode {
   id: string; // unique identifier for the node
   name: string; // name of the file or directory
   type: "file" | "directory"; // to differentiate between files and directories
@@ -9,14 +9,14 @@ interface FileNode {
   content?: string; // only for files
 }
 
-interface ShellState {
+export interface ShellState {
   cwd: FileNode; // tells me about the current working directory
   env: Record<string, string>; // tell me about the environment variables
   history: string[]; // command history
   root: FileNode; // the root of the file system tree
 }
 
-const RootNode: FileNode = {
+export const RootNode: FileNode = {
   id: "root",
   name: "/",
   type: "directory",
@@ -24,7 +24,7 @@ const RootNode: FileNode = {
   children: [],
 };
 
-export const initialShellState: ShellState = {
+export const InitialShellState: ShellState = {
   cwd: RootNode,
   env: {},
   history: [],
@@ -60,7 +60,6 @@ export const resolvePath = (
   }
   return currentNode;
 };
-
 
 export const addDirectory = (
   state: ShellState,
