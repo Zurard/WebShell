@@ -1,10 +1,10 @@
-// we need a a tree like structure for micmicking a file system and we need to store the current working directory and the command history
+// we need a tree like structure for mimicking a file system and we need to store the current working directory and the command history
 
 interface FileNode {
   id: string; // unique identifier for the node
   name: string; // name of the file or directory
   type: "file" | "directory"; // to differentiate between files and directories
-  parent: FileNode | null; // parent node id, null for root
+  parent: FileNode | null; // parent node reference, null for root
   children?: FileNode[]; // only for directories
   content?: string; // only for files
 }
@@ -31,92 +31,196 @@ export const initialShellState: ShellState = {
   root: RootNode,
 };
 
-const findNodeByPath = (node: FileNode, path: string) => {
-  const dir = path.split("/").filter(Boolean);
-  console.log("Finding node by path:", dir);
-  let currentNode = node;
-  for (const part of dir) {
+export const resolvePath = (
+  state: ShellState,
+  path: string,
+): FileNode | null => {
+  let currentNode = path.startsWith("/") ? state.root : state.cwd;
+  const parts = path.split("/").filter(Boolean);
+  for (const part of parts) {
+    if (part === ".") {
+      continue; // Stay where you are
+    }
+    if (part === "..") {
+      if (currentNode.parent) {
+        currentNode = currentNode.parent;
+      }
+      continue;
+    }
+
     if (currentNode.type !== "directory" || !currentNode.children) {
-      return null;
+      return null; // Can't traverse into non-directory
     }
     const nextNode = currentNode.children.find((child) => child.name === part);
     if (!nextNode) {
-      return null;
+      return null; // Path doesn't exist
     }
+
     currentNode = nextNode;
   }
   return currentNode;
 };
 
-export const addDirectory = (state: ShellState, cwd: FileNode) => {
-  // we need to add a directory to the file system tree
-  const currNode = findNodeByPath(state.root, cwd.name);
-  if (currNode && currNode.type === "directory") {
-    // first we need to check if the file aready exists or not so we dont create duplicate files or directories
-    if (currNode.children && currNode.children.some(child => child.name === `dir${currNode.children!.length}`)) {
-      return "dir already exists"; // directory already exists, do not create a duplicate
+
+export const addDirectory = (
+  state: ShellState,
+  dirName: string,
+): string | void => {
+  const currNode = state.cwd;
+
+  if (currNode.type !== "directory") {
+    return "Current node is not a directory";
+  }
+
+  // Check if directory already exists
+  if (
+    currNode.children &&
+    currNode.children.some(
+      (child) => child.name === dirName && child.type === "directory",
+    )
+  ) {
+    return `Directory '${dirName}' already exists`;
+  }
+
+  // Create new directory
+  const newDir: FileNode = {
+    id: `${currNode.id}-${Date.now()}`,
+    name: dirName,
+    type: "directory",
+    parent: currNode,
+    children: [],
+  };
+
+  if (!currNode.children) {
+    currNode.children = [];
+  }
+
+  currNode.children.push(newDir);
+};
+
+export const addFile = (
+  state: ShellState,
+  fileName: string,
+  content: string = "",
+): string | void => {
+  // Add file to current working directory
+  const currNode = state.cwd;
+
+  if (currNode.type !== "directory") {
+    return "Current node is not a directory";
+  }
+
+  // Check if file already exists
+  if (
+    currNode.children &&
+    currNode.children.some(
+      (child) => child.name === fileName && child.type === "file",
+    )
+  ) {
+    return `File '${fileName}' already exists`;
+  }
+
+  // Create new file
+  const newFile: FileNode = {
+    id: `${currNode.id}-${Date.now()}`,
+    name: fileName,
+    type: "file",
+    parent: currNode,
+    content,
+  };
+
+  if (!currNode.children) {
+    currNode.children = [];
+  }
+
+  currNode.children.push(newFile);
+};
+
+export const readFile = (state: ShellState, path: string): string | null => {
+  // Resolve path and read file
+  const target = resolvePath(state, path);
+
+  if (!target) {
+    return null; // Path doesn't exist
+  }
+
+  if (target.type !== "file") {
+    return null; // Not a file
+  }
+
+  return target.content || "";
+};
+
+export const writeFile = (
+  state: ShellState,
+  path: string,
+  content: string,
+): string | void => {
+  // Resolve path and write to file
+  const target = resolvePath(state, path);
+
+  if (!target) {
+    return "File not found";
+  }
+
+  if (target.type !== "file") {
+    return "Not a file";
+  }
+
+  target.content = content;
+};
+
+export const listDirectory = (
+  state: ShellState,
+  path: string = ".",
+): string[] | null => {
+  // List contents of directory
+  const target = resolvePath(state, path);
+
+  if (!target) {
+    return null; // Path doesn't exist
+  }
+
+  if (target.type !== "directory") {
+    return null; // Not a directory
+  }
+
+  if (!target.children) {
+    return [];
+  }
+
+  return target.children.map((child) => child.name);
+};
+
+export const changeDirectory = (
+  state: ShellState,
+  path: string,
+): string | void => {
+  // Change current working directory
+  const target = resolvePath(state, path);
+
+  if (!target) {
+    return "Directory not found";
+  }
+
+  if (target.type !== "directory") {
+    return "Not a directory";
+  }
+
+  state.cwd = target;
+};
+
+export const getCurrentWorkingDirectory = (state: ShellState): string => {
+  // Get full path of current directory
+  let path = "";
+  let node: FileNode | null = state.cwd;
+
+  while (node) {
+    if (node.name !== "/") {
+      path = "/" + node.name + path;
     }
-    const newDir: FileNode = {
-      id: `${currNode.id}-${currNode.children ? currNode.children.length : 0}`,
-      name: `dir${currNode.children ? currNode.children.length : 0}`,
-      type: "directory",
-      parent: currNode,
-      children: [],
-    };
-    if (!currNode.children) {
-      currNode.children = [];
-    }
-    currNode.children.push(newDir);
+    node = node.parent;
   }
-};
 
-export const addFile = (state: ShellState, cwd: FileNode, content: string) => {
-  // we need to add a file in the file system tree
-  const currNode = findNodeByPath(state.root, cwd.name);
-  if (currNode && currNode.type === "directory") {
-    const newFile: FileNode = {
-      id: `${currNode.id}-${currNode.children ? currNode.children.length : 0}`,
-      name: `file${currNode.children ? currNode.children.length : 0}`,
-      type: "file",
-      parent: currNode,
-      content,
-    };
-    if (!currNode.children) {
-      currNode.children = [];
-    }
-    currNode.children.push(newFile);
-  }
-};
-
-export const readFile = (state: ShellState, cwd: FileNode) => {
-  const currNode = findNodeByPath(state.root, cwd.name);
-  if (currNode && currNode.type === "file") {
-    return currNode.content || "";
-  }
-  return null;
-};
-
-export const writeFile = (state: ShellState, cwd: string, content: string) => {
-  const currNode = findNodeByPath(state.root, cwd);
-  if (currNode && currNode.type === "file") {
-    currNode.content = content;
-  }
-};
-
-export const listDirectory = (state: ShellState, cwd: FileNode) => {
-  const currNode = findNodeByPath(state.root, cwd.name);
-  if (currNode && currNode.type === "directory" && currNode.children) {
-    return currNode.children.map((child) => child.name);
-  }
-  return null;
-};
-
-export const changeDirectory = (state: ShellState, cwd: FileNode) => {
-  const currNode = findNodeByPath(state.root, cwd.name);
-  if (currNode && currNode.type === "directory") {
-    state.cwd = currNode;
-  }
-};
-export const getCurrentWorkingDirectory = (state: ShellState) => {
-  return state.cwd;
+  return path || "/";
 };
