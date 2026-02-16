@@ -4,40 +4,35 @@ import type { FileNode, ShellState } from "./state";
 
 type CommandHandler = (args: string[], state: ShellState) => string | void;
 
+// Function to get the current working directory path as a string
 export const lsHandler: CommandHandler = (args, state) => {
   const currNode = state.cwd;
-
   if (currNode.type !== "directory") {
     return "Not a directory";
   }
-
   if (!currNode.children || currNode.children.length === 0) {
     return "";
   }
-
   return currNode.children.map((child) => child.name).join("\n");
 };
 
+
+// Function to create a new directory in the current working directory
 export const mkdirHandler: CommandHandler = (args, state) => {
   if (!args[0]) {
     return "mkdir: missing directory name";
   }
-
   const dirName = args[0];
   const currNode = state.cwd;
-
   if (currNode.type !== "directory") {
     return "Current node is not a directory";
   }
-
   if (!currNode.children) {
     currNode.children = [];
   }
-
   if (currNode.children.some((child) => child.name === dirName)) {
     return `Directory "${dirName}" already exists`;
   }
-
   const newDir: FileNode = {
     id: `${currNode.id}-${Date.now()}`,
     name: dirName,
@@ -51,6 +46,8 @@ export const mkdirHandler: CommandHandler = (args, state) => {
   return `Directory "${dirName}" created`;
 };
 
+
+/// Function to change the current working directory
 export const cdHandler: CommandHandler = (args, state) => {
   if (!args[0]) {
     return "cd: missing directory name";
@@ -81,12 +78,16 @@ export const cdHandler: CommandHandler = (args, state) => {
   state.cwd = target;
 };
 
+
+// Command registry mapping command names to their handlers
 export const commandRegistry: Record<string, CommandHandler> = {
   ls: lsHandler,
   mkdir: mkdirHandler,
   cd: cdHandler,
 };
 
+
+// Function to get the command handler based on the command name
 export const getCommand = (commandName: string): CommandHandler | null => {
   return commandRegistry[commandName] || null;
 };
