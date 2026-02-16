@@ -1,8 +1,8 @@
 // in this we actaully execute the command and return the output to the client
 
-import { parseCommand } from "./parser.ts";
-import { getCommand } from "./registry.ts";
-import { type ShellState} from "./state.ts";
+import { parseCommand } from "./parser.js";
+import { getCommand } from "./registry.js";
+import { type ShellState} from "./state.js";
 
 
 export const executeCommand = (command: string, state: ShellState): string => {

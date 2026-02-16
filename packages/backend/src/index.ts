@@ -1,5 +1,6 @@
 import { WebSocketServer, WebSocket } from "ws";
-import { exec } from "child_process";
+import { executeCommand } from "./shell/executor.js";
+import { InitialShellState } from "./shell/state.js";
 
 const PORT = 8080;
 const wss = new WebSocketServer({ port: PORT });
@@ -9,21 +10,20 @@ console.log(`WebSocket server running on ws://localhost:${PORT}`);
 wss.on("connection", (ws: WebSocket) => {
   console.log("Client connected");
 
+  // Create state ONCE per connection - persists across commands
+  const state = { ...InitialShellState };
+
   ws.on("message", (command: string) => {
     const cmd = command.toString().trim();
     console.log(`Received command: ${cmd}`);
 
+    // Execute custom shell command
+    const output = executeCommand(cmd, state);
+    console.log(`Command output: ${output}`);
 
-    // Execute real Linux command   
-    exec(cmd, (error, stdout, stderr) => {
-      if (error) {
-        ws.send(
-          JSON.stringify({ type: "error", data: stderr || error.message }),
-        );
-        return;
-      }
-      ws.send(JSON.stringify({ type: "output", data: stdout }));
-    });
+    // Send output back to client
+    ws.send(JSON.stringify({ type: "output", data: output }));
+
   });
 
   ws.on("close", () => {
