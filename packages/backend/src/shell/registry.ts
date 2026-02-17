@@ -152,6 +152,75 @@ export const catHandler: CommandHandler = (args, state) => {
   return targetFile.content;
 }
 
+const rmdirHandler: CommandHandler = (args, state) => {
+  if (!args[0]) {
+    return "rmdir: missing directory name";
+  }
+  const dirName = args[0];
+  const currNode = state.cwd;
+  if (currNode.type !== "directory" || !currNode.children) {
+    return "Current node is not a directory";
+  }
+  const targetIndex = currNode.children.findIndex(
+    (child) => child.name === dirName && child.type === "directory",
+  );
+  if (targetIndex === -1) {
+    return `rmdir: no such directory: ${dirName}`;
+  }
+  currNode.children.splice(targetIndex, 1);
+  return `Directory "${dirName}" removed`;
+}
+
+
+// Command to remove a file in the current working directory
+export const rmHandler: CommandHandler = (args, state) => {
+  if (!args[0]) {
+    return "rm: missing file name";
+  }
+  const fileName = args[0];
+  const currNode = state.cwd;
+  if (currNode.type !== "directory" || !currNode.children) {
+    return "Current node is not a directory";
+  }
+  const targetIndex = currNode.children.findIndex(
+    (child) => child.name === fileName && child.type === "file",
+  );
+  if (targetIndex === -1) {
+    return `rm: no such file: ${fileName}`;
+  }
+  currNode.children.splice(targetIndex, 1);
+  return `File "${fileName}" removed`;
+}
+
+// command to print the current working directory path
+export const pwdHandler: CommandHandler = (args, state) => {
+  const path: string[] = [];
+  let currentNode: FileNode | null = state.cwd;
+
+  while (currentNode) {
+    path.unshift(currentNode.name);
+    currentNode = currentNode.parent;
+  }
+
+  return "/" + path.join("/");
+}
+
+// command to show all available commands
+export const helpHandler: CommandHandler = (args, state) => {
+  return `Available commands:
+  - ls: List files and directories in the current directory
+  - mkdir <dir>: Create a new directory
+  - cd <dir>: Change the current directory
+  - touch <file>: Create a new file
+  - echo <file> <content>: Write content to a file
+  - cat <file>: Display the content of a file
+  - rmdir <dir>: Remove a directory
+  - rm <file>: Remove a file
+  - pwd: Print the current working directory path
+  - clear - Clear the terminal output
+  - help - Show this help message you just used this rn LOSER `;
+}
+
 // Command registry mapping command names to their handlers
 export const commandRegistry: Record<string, CommandHandler> = {
   ls: lsHandler,
@@ -159,7 +228,11 @@ export const commandRegistry: Record<string, CommandHandler> = {
   cd: cdHandler,
   touch: touchHandler,
   echo: echoHandler,
-  cat: catHandler,
+  cat: catHandler, 
+  rmdir: rmdirHandler,
+  rm: rmHandler,
+  pwd: pwdHandler,
+  help : helpHandler,
 };
 
 
