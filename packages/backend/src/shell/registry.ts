@@ -16,22 +16,21 @@ export const lsHandler: CommandHandler = (args, state) => {
   return currNode.children.map((child) => child.name).join("\n");
 };
 
-
 // Function to create a new directory in the current working directory
 export const mkdirHandler: CommandHandler = (args, state) => {
   if (!args[0]) {
-    return "mkdir: missing directory name";
+    return "error: missing directory name";
   }
   const dirName = args[0];
   const currNode = state.cwd;
   if (currNode.type !== "directory") {
-    return "Current node is not a directory";
+    return "error: Current node is not a directory";
   }
   if (!currNode.children) {
     currNode.children = [];
   }
   if (currNode.children.some((child) => child.name === dirName)) {
-    return `Directory "${dirName}" already exists`;
+    return `error: Directory "${dirName}" already exists`;
   }
   const newDir: FileNode = {
     id: `${currNode.id}-${Date.now()}`,
@@ -43,14 +42,13 @@ export const mkdirHandler: CommandHandler = (args, state) => {
 
   currNode.children.push(newDir);
 
-  return `Directory "${dirName}" created`;
+  return `✓ Directory "${dirName}" created`;
 };
-
 
 /// Function to change the current working directory
 export const cdHandler: CommandHandler = (args, state) => {
   if (!args[0]) {
-    return "cd: missing directory name";
+    return "error: missing directory name";
   }
 
   const targetName = args[0];
@@ -64,7 +62,7 @@ export const cdHandler: CommandHandler = (args, state) => {
   }
 
   if (currNode.type !== "directory" || !currNode.children) {
-    return "Not a directory";
+    return "error: Not a directory";
   }
 
   const target = currNode.children.find(
@@ -72,7 +70,7 @@ export const cdHandler: CommandHandler = (args, state) => {
   );
 
   if (!target) {
-    return `cd: no such directory: ${targetName}`;
+    return `error: no such directory: ${targetName}`;
   }
 
   state.cwd = target;
@@ -100,18 +98,14 @@ export const touchHandler: CommandHandler = (args, state) => {
     type: "file",
     parent: currNode,
     content: "",
-  }
+  };
   currNode.children.push(newFile);
 
   return `File "${fileName}" created`;
-
-}
+};
 
 // Function to write content to a file in the current working directory
-
-
-// THE CMD SHOULD LOOK LIKE THIS : echo filename.txt "wASSUP MF " 
-
+// THE CMD SHOULD LOOK LIKE THIS : echo filename.txt "wASSUP MF "
 export const echoHandler: CommandHandler = (args, state) => {
   if (args.length < 2) {
     return "echo: missing file name or content";
@@ -130,8 +124,7 @@ export const echoHandler: CommandHandler = (args, state) => {
   }
   targetFile.content = content;
   return `Content written to "${fileName}"`;
-}
-
+};
 
 // Command to see what is written in a file : cat filename.txt
 export const catHandler: CommandHandler = (args, state) => {
@@ -150,7 +143,7 @@ export const catHandler: CommandHandler = (args, state) => {
     return `cat: no such file: ${fileName}`;
   }
   return targetFile.content;
-}
+};
 
 const rmdirHandler: CommandHandler = (args, state) => {
   if (!args[0]) {
@@ -169,8 +162,7 @@ const rmdirHandler: CommandHandler = (args, state) => {
   }
   currNode.children.splice(targetIndex, 1);
   return `Directory "${dirName}" removed`;
-}
-
+};
 
 // Command to remove a file in the current working directory
 export const rmHandler: CommandHandler = (args, state) => {
@@ -190,7 +182,7 @@ export const rmHandler: CommandHandler = (args, state) => {
   }
   currNode.children.splice(targetIndex, 1);
   return `File "${fileName}" removed`;
-}
+};
 
 // command to print the current working directory path
 export const pwdHandler: CommandHandler = (args, state) => {
@@ -203,40 +195,37 @@ export const pwdHandler: CommandHandler = (args, state) => {
   }
 
   return "/" + path.join("/");
-}
+};
 
-// command to show all available commands
+// command to show all the available commands and their usage
 export const helpHandler: CommandHandler = (args, state) => {
   return `Available commands:
-  - ls: List files and directories in the current directory
-  - mkdir <dir>: Create a new directory
-  - cd <dir>: Change the current directory
-  - touch <file>: Create a new file
-  - echo <file> <content>: Write content to a file
-  - cat <file>: Display the content of a file
-  - rmdir <dir>: Remove a directory
-  - rm <file>: Remove a file
-  - pwd: Print the current working directory path
-  - clear - Clear the terminal output
-  - help - Show this help message you just used this rn LOSER `;
-}
+  scan          - List files and directories in current directory,
+  forge <dir>   - Create a new directory
+  warp <dir>    - Change to a different directory
+  spawn <file>  - Create a new file
+  inject <file> - Write content to a file
+  read <file>   - Display the content of a file
+  murderdir     - Remove a directory
+  pwd           - Print current working directory
+  help          - Show this help message`;
+};
 
 // Command registry mapping command names to their handlers
 export const commandRegistry: Record<string, CommandHandler> = {
-  ls: lsHandler,
-  mkdir: mkdirHandler,
-  cd: cdHandler,
-  touch: touchHandler,
-  echo: echoHandler,
-  cat: catHandler, 
-  rmdir: rmdirHandler,
-  rm: rmHandler,
+  scan: lsHandler,
+  forge: mkdirHandler,
+  warp: cdHandler,
+  spawn: touchHandler,
+  inject: echoHandler,
+  read: catHandler,
+  murderdir: rmdirHandler,
+  murder: rmHandler,
   pwd: pwdHandler,
-  help : helpHandler,
+  help: helpHandler,
 };
 
-
-// Function to get the command handler based on the command name 
+// Function to get the command handler based on the command name
 export const getCommand = (commandName: string): CommandHandler | null => {
   return commandRegistry[commandName] || null;
 };

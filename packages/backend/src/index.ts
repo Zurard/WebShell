@@ -1,6 +1,7 @@
 import { WebSocketServer, WebSocket } from "ws";
 import { executeCommand } from "./shell/executor.js";
 import { InitialShellState } from "./shell/state.js";
+import type { CommandResponse } from "@webshell/shared/src/types.js";
 
 const PORT = 8080;
 const wss = new WebSocketServer({ port: PORT });
@@ -17,13 +18,19 @@ wss.on("connection", (ws: WebSocket) => {
     const cmd = command.toString().trim();
     console.log(`Received command: ${cmd}`);
 
-    // Execute custom shell command
+    // Execute custom shell command 
     const output = executeCommand(cmd, state);
-    console.log(`Command output: ${output}`);
+    console.log(`Command output:`, output);
 
-    // Send output back to client
-    ws.send(JSON.stringify({ type: "output", data: output }));
-
+    // Send structured output back to client
+    const response: CommandResponse = {
+      type: output.success ? "output" : "error",
+      data: output.message,
+      ...(output.structured && { structured: output.structured }),
+      timestamp: Date.now()
+    };
+    
+    ws.send(JSON.stringify(response));
   });
 
   ws.on("close", () => {

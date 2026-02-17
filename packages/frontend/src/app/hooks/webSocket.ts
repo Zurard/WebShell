@@ -2,13 +2,30 @@
 
 import { useEffect, useRef, useState } from "react";
 
+interface StructuredOutput {
+  format: "text" | "list" | "table" | "json" | "path" | "success" | "error";
+  content: string | string[] | Record<string, string>;
+  metadata?: {
+    itemCount?: number;
+    isEmpty?: boolean;
+  };
+}
+
 interface WebSocketMessage {
   type: 'clear' | 'output' | 'error';
+  data?: string;
+  structured?: StructuredOutput;
+  timestamp?: number;
+}
+
+export interface ProcessedMessage {
+  type: 'clear' | 'output' | 'error';
   data: string;
+  structured?: StructuredOutput;
 }
 
 export function useWebSocket(url :string) {
-    const [command, setMessages] = useState<string[]>([])
+    const [command, setMessages] = useState<ProcessedMessage[]>([])
     const [isConnected ,setIsConnected] = useState<boolean>(false)
     const wsRef = useRef<WebSocket | null>(null)
 
@@ -25,25 +42,33 @@ export function useWebSocket(url :string) {
         ws.onmessage = (event) => {
             const message: WebSocketMessage = JSON.parse(event.data);
             console.log("Received message:", message);
+            
+            const processedMessage: ProcessedMessage = {
+              type: message.type,
+              data: message.data || "",
+              structured: message.structured
+            };
+            
             switch(message.type) {
                 case 'clear':
                     setMessages([]);
                     break;
                 case 'output':
-                    setMessages((prev) => [...prev, message.data]);
+                    setMessages((prev) => [...prev, processedMessage]);
                     break;  
                 case 'error':
-                    // console.error("WebSocket error:", message.data);
-                    setMessages((prev) => [...prev, `Error: ${message.data}`]);
+                    setMessages((prev) => [...prev, processedMessage]);
                     break;
             }
         }
 
         ws.onerror = (error) => {
-            // console.error("WebSocket error", error);
-            setMessages((prev) => [...prev, `Error: ${error}`]);
+            const errorMessage: ProcessedMessage = {
+              type: 'error',
+              data: `Error: ${error}`
+            };
+            setMessages((prev) => [...prev, errorMessage]);
         };
-
 
         ws.onclose = () => {
             console.log("WebSocket connection closed");
