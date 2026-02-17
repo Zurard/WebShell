@@ -514,24 +514,7 @@ Enable console logs in:
 
 ---
 
-## 📄 License
 
-This project is open source and available under the MIT License.
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Feel free to submit issues and enhancement requests.
-
----
-
-## 📞 Support
-
-For issues or questions, please check:
-1. This README
-2. Code comments in source files
-3. TypeScript type definitions
 
 ---
 
