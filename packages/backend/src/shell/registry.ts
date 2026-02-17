@@ -78,16 +78,92 @@ export const cdHandler: CommandHandler = (args, state) => {
   state.cwd = target;
 };
 
+// function to make a file in the current working directory
+export const touchHandler: CommandHandler = (args, state) => {
+  if (!args[0]) {
+    return "touch: missing file name";
+  }
+  const fileName = args[0];
+  const currNode = state.cwd;
+  if (currNode.type !== "directory") {
+    return "Current node is not a directory";
+  }
+  if (!currNode.children) {
+    currNode.children = [];
+  }
+  if (currNode.children.some((child) => child.name === fileName)) {
+    return `File "${fileName}" already exists`;
+  }
+  const newFile: FileNode = {
+    id: `${currNode.id}-${Date.now()}`,
+    name: fileName,
+    type: "file",
+    parent: currNode,
+    content: "",
+  }
+  currNode.children.push(newFile);
+
+  return `File "${fileName}" created`;
+
+}
+
+// Function to write content to a file in the current working directory
+
+
+// THE CMD SHOULD LOOK LIKE THIS : echo filename.txt "wASSUP MF " 
+
+export const echoHandler: CommandHandler = (args, state) => {
+  if (args.length < 2) {
+    return "echo: missing file name or content";
+  }
+  const fileName = args[0];
+  const content = args.slice(1).join(" ");
+  const currNode = state.cwd;
+  if (currNode.type !== "directory" || !currNode.children) {
+    return "Current node is not a directory";
+  }
+  const targetFile = currNode.children.find(
+    (child) => child.name === fileName && child.type === "file",
+  );
+  if (!targetFile) {
+    return `echo: no such file: ${fileName}`;
+  }
+  targetFile.content = content;
+  return `Content written to "${fileName}"`;
+}
+
+
+// Command to see what is written in a file : cat filename.txt
+export const catHandler: CommandHandler = (args, state) => {
+  if (!args[0]) {
+    return "cat: missing file name";
+  }
+  const fileName = args[0];
+  const currNode = state.cwd;
+  if (currNode.type !== "directory" || !currNode.children) {
+    return "Current node is not a directory";
+  }
+  const targetFile = currNode.children.find(
+    (child) => child.name === fileName && child.type === "file",
+  );
+  if (!targetFile) {
+    return `cat: no such file: ${fileName}`;
+  }
+  return targetFile.content;
+}
 
 // Command registry mapping command names to their handlers
 export const commandRegistry: Record<string, CommandHandler> = {
   ls: lsHandler,
   mkdir: mkdirHandler,
   cd: cdHandler,
+  touch: touchHandler,
+  echo: echoHandler,
+  cat: catHandler,
 };
 
 
-// Function to get the command handler based on the command name
+// Function to get the command handler based on the command name 
 export const getCommand = (commandName: string): CommandHandler | null => {
   return commandRegistry[commandName] || null;
 };
