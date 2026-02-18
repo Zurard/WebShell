@@ -27,6 +27,7 @@ export interface ProcessedMessage {
 export function useWebSocket(url :string) {
     const [command, setMessages] = useState<ProcessedMessage[]>([])
     const [isConnected ,setIsConnected] = useState<boolean>(false)
+    const [sessionId, setSessionId] = useState<string>("")
     const wsRef = useRef<WebSocket | null>(null)
 
     useEffect(( )=> {
@@ -42,6 +43,13 @@ export function useWebSocket(url :string) {
         ws.onmessage = (event) => {
             const message: WebSocketMessage = JSON.parse(event.data);
             console.log("Received message:", message);
+            
+            // Extract session ID from initial connection message
+            if (message.data?.startsWith("Connected with session:")) {
+              const extractedSessionId = message.data.replace("Connected with session: ", "");
+              setSessionId(extractedSessionId);
+              console.log("Session established:", extractedSessionId);
+            }
             
             const processedMessage: ProcessedMessage = {
               type: message.type,
@@ -73,6 +81,7 @@ export function useWebSocket(url :string) {
         ws.onclose = () => {
             console.log("WebSocket connection closed");
             setIsConnected(false);
+            setSessionId("");
         };
 
         return () => {
@@ -90,6 +99,7 @@ const sendCommand = (command: string) => {
     return {
         command,
         isConnected,
+        sessionId,
         sendCommand
     }
 }

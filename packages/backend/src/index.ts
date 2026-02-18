@@ -6,23 +6,41 @@ import type { CommandResponse } from "@webshell/shared/src/types.js";
 const PORT = 8080;
 const wss = new WebSocketServer({ port: PORT });
 
+// Map to store per-client session state
+const clientSessions = new Map<WebSocket, { id: string; state: typeof InitialShellState }>();
+
 console.log(`WebSocket server running on ws://localhost:${PORT}`);
 
 wss.on("connection", (ws: WebSocket) => {
-  console.log("Client connected");
+  // Generate unique session ID for this connection
+  const sessionId = `session-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  console.log(`Client connected with session: ${sessionId}`);
 
-  // Create state ONCE per connection - persists across commands
-  const state = { ...InitialShellState };
+  // Create unique state for this client
+  const clientState = { ...InitialShellState };
+  clientSessions.set(ws, { id: sessionId, state: clientState });
+
+  // Send session ID to client
+  const initResponse: CommandResponse = {
+    type: "output",
+    data: `Connected with session: ${sessionId}`,
+    timestamp: Date.now()
+  };
+  ws.send(JSON.stringify(initResponse));
 
   ws.on("message", (command: string) => {
     const cmd = command.toString().trim();
-    console.log(`Received command: ${cmd}`);
+    const session = clientSessions.get(ws);
+    
+    if (!session) return;
+    
+    console.log(`[${session.id}] Received command: ${cmd}`);
 
-    // Execute custom shell command 
-    const output = executeCommand(cmd, state);
-    console.log(`Command output:`, output);
+    // Execute command with this client's state
+    const output = executeCommand(cmd, session.state);
+    console.log(`[${session.id}] Command output:`, output);
 
-    // Send structured output back to client
+    // Send response ONLY to this client
     const response: CommandResponse = {
       type: output.success ? "output" : "error",
       data: output.message,
@@ -34,6 +52,9 @@ wss.on("connection", (ws: WebSocket) => {
   });
 
   ws.on("close", () => {
-    console.log("Client disconnected");
+    const session = clientSessions.get(ws);
+    console.log(`Client disconnected: ${session?.id}`);
+    clientSessions.delete(ws);
   });
 });
+

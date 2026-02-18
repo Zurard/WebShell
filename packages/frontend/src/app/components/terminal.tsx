@@ -111,7 +111,7 @@ const OutputRenderer: React.FC<{ message: ProcessedMessage }> = ({ message }) =>
 export default function Terminal() {
   const [cmd, setCmd] = useState("");
   const [history, setHistory] = useState<TerminalLine[]>([]);
-  const { command, isConnected, sendCommand } = useWebSocket('wss://webshell-backend.onrender.com');
+  const { command, isConnected, sendCommand, sessionId } = useWebSocket('wss://webshell-backend.onrender.com');
   const terminalRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -188,6 +188,11 @@ export default function Terminal() {
             <div className="w-3 h-3 rounded-full bg-green-500"></div>
           </div>
           <span className="text-xs text-gray-400 ml-2">WebShell: ~</span>
+          {sessionId && (
+            <span className="text-xs text-gray-500 ml-4 px-2 py-1 bg-gray-800 rounded border border-gray-700">
+              {sessionId}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-400' : 'bg-red-500'}`}></div>
