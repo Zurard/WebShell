@@ -111,7 +111,7 @@ const OutputRenderer: React.FC<{ message: ProcessedMessage }> = ({ message }) =>
 export default function Terminal() {
   const [cmd, setCmd] = useState("");
   const [history, setHistory] = useState<TerminalLine[]>([]);
-  const { command, isConnected, sendCommand } = useWebSocket('ws://localhost:8080');
+  const { command, isConnected, sendCommand } = useWebSocket('wss://webshell-backend.onrender.com');
   const terminalRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
