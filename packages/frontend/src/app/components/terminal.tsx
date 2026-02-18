@@ -110,6 +110,7 @@ const OutputRenderer: React.FC<{ message: ProcessedMessage }> = ({ message }) =>
 
 export default function Terminal() {
   const [cmd, setCmd] = useState("");
+  const [history, setHistory] = useState<TerminalLine[]>([]);
   const { command, isConnected, sendCommand } = useWebSocket('wss://webshell-backend.onrender.com');
   const terminalRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -166,12 +167,15 @@ export default function Terminal() {
     }
   };
 
-  // Derive history from command messages
-  const displayHistory = command.map(msg => ({
-    type: msg.type === "error" ? "error" : "output" as const,
-    content: msg.data,
-    message: msg
-  }));
+  // Combine history and command messages for display
+  const displayHistory = [
+    ...history,
+    ...command.map(msg => ({
+      type: msg.type === "error" ? "error" : "output" as const,
+      content: msg.data,
+      message: msg
+    }))
+  ];
 
   return (
     <div onClick={focusTextarea} className="relative w-screen h-screen bg-black text-green-400 font-mono overflow-hidden cursor-text" style={{ fontFamily: "'Courier New', monospace" }}>
