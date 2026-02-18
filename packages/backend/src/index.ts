@@ -16,8 +16,8 @@ wss.on("connection", (ws: WebSocket) => {
   const sessionId = `session-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
   console.log(`Client connected with session: ${sessionId}`);
 
-  // Create unique state for this client
-  const clientState = { ...InitialShellState };
+  // Create DEEP COPY of state for this client - prevents shared references
+  const clientState = JSON.parse(JSON.stringify(InitialShellState));
   clientSessions.set(ws, { id: sessionId, state: clientState });
 
   // Send session ID to client
