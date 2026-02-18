@@ -110,7 +110,6 @@ const OutputRenderer: React.FC<{ message: ProcessedMessage }> = ({ message }) =>
 
 export default function Terminal() {
   const [cmd, setCmd] = useState("");
-  const [history, setHistory] = useState<TerminalLine[]>([]);
   const { command, isConnected, sendCommand } = useWebSocket('wss://webshell-backend.onrender.com');
   const terminalRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -167,19 +166,12 @@ export default function Terminal() {
     }
   };
 
-  // Add incoming messages to history
-  useEffect(() => {
-    if (command.length > 0) {
-      const lastMsg = command[command.length - 1];
-      console.log("New message received:", lastMsg);
-      
-      setHistory(prev => [...prev, { 
-        type: lastMsg.type === "error" ? "error" : "output", 
-        content: lastMsg.data,
-        message: lastMsg
-      }]);
-    }
-  }, [command]);
+  // Derive history from command messages
+  const displayHistory = command.map(msg => ({
+    type: msg.type === "error" ? "error" : "output" as const,
+    content: msg.data,
+    message: msg
+  }));
 
   return (
     <div onClick={focusTextarea} className="relative w-screen h-screen bg-black text-green-400 font-mono overflow-hidden cursor-text" style={{ fontFamily: "'Courier New', monospace" }}>
@@ -206,18 +198,18 @@ export default function Terminal() {
       >
         <div className="inline whitespace-normal break-normal text-xs leading-relaxed">
           {/* Welcome message */}
-          {history.length === 0 && (
+          {displayHistory.length === 0 && (
             <>
               <span className="text-green-600">Welcome to Terminal v1.0.0</span>
               <br />
-              <span className="text-green-600">Type 'help' for available commands</span>
+              <span className="text-green-600">Type &apos;help&apos; for available commands</span>
               <br />
               <br />
             </>
           )}
 
           {/* History lines */}
-          {history.map((line, index) => (
+          {displayHistory.map((line, index) => (
             <React.Fragment key={index}>
               {line.type === "command" ? (
                 <>
