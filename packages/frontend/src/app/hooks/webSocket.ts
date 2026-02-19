@@ -87,7 +87,8 @@ export function useWebSocket(url: string, options?: UseWebSocketOptions) {
         };
 
         ws.onclose = () => {
-            // console.log(`[WebSocket Hook ${instanceId}] WebSocket connection closed`);
+//             console.log(`[WebSocket Hook ${instanceId}] WebSocket connection closed`);
+            // this is bullishit 
             setIsConnected(false);
             setSessionId("");
         };
