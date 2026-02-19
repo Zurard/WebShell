@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useWebSocket, type ProcessedMessage } from "../hooks/webSocket";
 
 interface TerminalLine {
@@ -111,9 +111,30 @@ const OutputRenderer: React.FC<{ message: ProcessedMessage }> = ({ message }) =>
 export default function Terminal() {
   const [cmd, setCmd] = useState("");
   const [history, setHistory] = useState<TerminalLine[]>([]);
-  const { command, isConnected, sendCommand, sessionId } = useWebSocket('wss://webshell-backend.onrender.com');
   const terminalRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Callback: append output/error to history right after the command
+  const handleMessage = useCallback((msg: ProcessedMessage) => {
+    setHistory(prev => [
+      ...prev,
+      {
+        type: msg.type === "error" ? "error" : "output",
+        content: msg.data,
+        message: msg,
+      },
+    ]);
+  }, []);
+
+  // Callback: server-initiated clear
+  const handleClear = useCallback(() => {
+    setHistory([]);
+  }, []);
+
+  const { isConnected, sendCommand, sessionId } = useWebSocket(
+    'wss://webshell-backend.onrender.com',
+    { onMessage: handleMessage, onClear: handleClear }
+  );
 
   // Focus textarea on mount and keep focus
   useEffect(() => {
@@ -145,14 +166,14 @@ export default function Terminal() {
       e.preventDefault();
       const trimmed = cmd.trim();
       if (trimmed) {
-        // Handle clear command
+        // Handle clear command client-side
         if (trimmed.toLowerCase() === "clear") {
           setHistory([]);
           setCmd("");
           return;
         }
 
-        // Add command to history
+        // Add command to history, then send it
         setHistory(prev => [...prev, { type: "command", content: trimmed }]);
         sendCommand(trimmed);
         setCmd("");
@@ -166,16 +187,6 @@ export default function Terminal() {
       setCmd(prev => prev + e.key);
     }
   };
-
-  // Combine history and command messages for display
-  const displayHistory = [
-    ...history,
-    ...command.map(msg => ({
-      type: msg.type === "error" ? "error" : "output" as const,
-      content: msg.data,
-      message: msg
-    }))
-  ];
 
   return (
     <div onClick={focusTextarea} className="relative w-screen h-screen bg-black text-green-400 font-mono overflow-hidden cursor-text" style={{ fontFamily: "'Courier New', monospace" }}>
@@ -207,7 +218,7 @@ export default function Terminal() {
       >
         <div className="inline whitespace-normal break-normal text-xs leading-relaxed">
           {/* Welcome message */}
-          {displayHistory.length === 0 && (
+          {history.length === 0 && (
             <>
               <span className="text-green-600">Welcome to Terminal v1.0.0</span>
               <br />
@@ -218,7 +229,7 @@ export default function Terminal() {
           )}
 
           {/* History lines */}
-          {displayHistory.map((line, index) => (
+          {history.map((line, index) => (
             <React.Fragment key={index}>
               {line.type === "command" ? (
                 <>
