@@ -44,25 +44,25 @@ export function useWebSocket(url: string, options?: UseWebSocketOptions) {
 
     useEffect(() => {
         const instanceId = Math.random().toString(36).slice(2, 9);
-        console.log(`[WebSocket Hook ${instanceId}] Creating new connection to ${url}`);
+        // console.log(`[WebSocket Hook ${instanceId}] Creating new connection to ${url}`);
 
         const ws = new WebSocket(url);
         wsRef.current = ws;
 
         ws.onopen = () => {
-            console.log(`[WebSocket Hook ${instanceId}] Connected to Websocket`);
+            // console.log(`[WebSocket Hook ${instanceId}] Connected to Websocket`);
             setIsConnected(true);
         };
 
         ws.onmessage = (event) => {
             const message: WebSocketMessage = JSON.parse(event.data);
-            console.log(`[WebSocket Hook ${instanceId}] Received message:`, message);
+            // console.log(`[WebSocket Hook ${instanceId}] Received message:`, message);
 
             // Extract session ID from initial connection message
             if (message.data?.startsWith("Connected with session:")) {
                 const extractedSessionId = message.data.replace("Connected with session: ", "");
                 setSessionId(extractedSessionId);
-                console.log(`[WebSocket Hook ${instanceId}] Session established:`, extractedSessionId);
+                // console.log(`[WebSocket Hook ${instanceId}] Session established:`, extractedSessionId);
             }
 
             const processedMessage: ProcessedMessage = {
@@ -79,7 +79,7 @@ export function useWebSocket(url: string, options?: UseWebSocketOptions) {
         };
 
         ws.onerror = (error) => {
-            console.log(`[WebSocket Hook ${instanceId}] Error:`, error);
+            // console.log(`[WebSocket Hook ${instanceId}] Error:`, error);
             onMessageRef.current?.({
                 type: 'error',
                 data: `Connection error`
@@ -87,20 +87,20 @@ export function useWebSocket(url: string, options?: UseWebSocketOptions) {
         };
 
         ws.onclose = () => {
-            console.log(`[WebSocket Hook ${instanceId}] WebSocket connection closed`);
+            // console.log(`[WebSocket Hook ${instanceId}] WebSocket connection closed`);
             setIsConnected(false);
             setSessionId("");
         };
 
         return () => {
-            console.log(`[WebSocket Hook ${instanceId}] Cleaning up - closing WebSocket`);
+            // console.log(`[WebSocket Hook ${instanceId}] Cleaning up - closing WebSocket`);
             ws.close();
         };
     }, [url]);
 
     const sendCommand = useCallback((command: string) => {
-        if (isConnected && wsRef.current) {
-            console.log(`[sendCommand] Sending:`, command);
+            if (isConnected && wsRef.current) {
+            // console.log(`[sendCommand] Sending:`, command);
             wsRef.current.send(command);
         } else {
             console.error("WebSocket is not connected");

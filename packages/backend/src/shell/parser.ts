@@ -5,14 +5,14 @@ export const parseCommand = (command: string) => {
   const [cmd, ...args] = command.trim().split(/\s+/);
 
   if (!cmd) {
-    console.log("No command entered");
+    // console.log("No command entered");
     return { parsedCommand: null };
   }
   const parsedCommand = {
     cmd,
     args,
   };
-  console.log("Parsed Command:", parsedCommand);
+  // console.log("Parsed Command:", parsedCommand);
   return {
     parsedCommand,
   };
